@@ -1,7 +1,7 @@
 import {CoursesService} from './courses.service';
 import {TestBed} from '@angular/core/testing';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {COURSES} from '../../../../server/db-data';
+import {COURSES, findLessonsForCourse} from '../../../../server/db-data';
 import {Course} from '../model/course';
 import {HttpErrorResponse} from '@angular/common/http';
 
@@ -55,6 +55,23 @@ describe('CoursesService', () => {
     expect(req.request.body.titles.description)
       .toEqual(changes.titles.description);
     req.flush({...COURSES[12], ...changes});
+  });
+
+  it('should find a list of lessons', () => {
+    coursesService.findLessons(12)
+      .subscribe(lessons => {
+        expect(lessons).toBeTruthy();
+        expect(lessons.length).toBe(3);
+      });
+    const req = httpTestingController.expectOne(
+      request => request.url === '/api/lessons');
+    expect(req.request.method).toEqual('GET');
+    expect(req.request.params.get('courseId')).toEqual('12');
+    expect(req.request.params.get('filter')).toEqual('');
+    expect(req.request.params.get('sortOrder')).toEqual('asc');
+    expect(req.request.params.get('pageNumber')).toEqual('0');
+    expect(req.request.params.get('pageSize')).toEqual('3');
+    req.flush({payload: findLessonsForCourse(12).slice(0, 3)});
   });
 
   it('should give an error if save course fails', () => {
